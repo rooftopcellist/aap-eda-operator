@@ -64,5 +64,29 @@ spec:
         name: eda-worker
         ports:
         - containerPort: 8000
-        resources: {{ api.resource_requirements }}
+{% if worker.resource_requirements is defined %}
+        resources: {{ worker.resource_requirements }}
+{% endif %}
+        volumeMounts:
+          - name: {{ ansible_operator_meta.name }}-settings
+            mountPath: /app/src/src/aap_eda/settings/default.py
+            subPath: default.py
+            readOnly: true
+          - name: {{ ansible_operator_meta.name }}-nginx-conf
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+            readOnly: true
       restartPolicy: Always
+      volumes:
+        - name: {{ ansible_operator_meta.name }}-settings
+          configMap:
+            name: '{{ ansible_operator_meta.name }}-{{ deployment_type }}-configmap'
+            items:
+              - key: settings
+                path: default.py
+        - name: {{ ansible_operator_meta.name }}-nginx-conf
+          configMap:
+            name: '{{ ansible_operator_meta.name }}-{{ deployment_type }}-configmap'
+            items:
+              - key: nginx_conf
+                path: nginx.conf
